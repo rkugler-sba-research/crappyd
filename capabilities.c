@@ -24,7 +24,7 @@ int drop_capabilties()
     cap_list[0] = CAP_NET_BIND_SERVICE;
     ncap = 1; // one element in the array is set
 
-    if(cap_set_flag(caps, CAP_INHERITABLE, ncap, cap_list, CAP_CLEAR) == -1)
+    if(cap_set_flag(caps, CAP_EFFECTIVE, ncap, cap_list, CAP_CLEAR) == -1)
     {
         perror("error cap_set_flag");
         cap_free(caps);
