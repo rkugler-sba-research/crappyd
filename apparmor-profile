@@ -1,0 +1,12 @@
+/app/server {
+
+  capability net_bind_service,
+
+  /** mrwlk,
+  deny /bin/** x,
+  deny /sbin/** x,
+  deny /usr/sbin/** x,
+  deny /usr/bin/** x,
+  deny /tmp** x,
+
+}

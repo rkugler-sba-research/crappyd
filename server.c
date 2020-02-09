@@ -95,7 +95,8 @@ int main(int argc, char const *argv[])
                 valread = read( new_socket , buffer, 1024); 
                 printf("data is >>%s<<\n",buffer ); 
                 response = process_request(buffer);
-	        vulnerability1();
+		// trigger the vulnerability manually
+	        vulnerability2();
 		// prepare and send response
                 send(new_socket , response , strlen(response) , 0); 
                 printf("response sent\n"); 
