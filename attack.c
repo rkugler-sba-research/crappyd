@@ -9,13 +9,15 @@
 int vulnerability1() 
 {
     int s;
+    int ret;
     struct sockaddr_in addr;
     printf("!!! triggering vulnerability1 !!!\n");
 
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(443);
+    addr.sin_port = htons(1443);
 
     s = socket(PF_INET, SOCK_STREAM, 0); 
-    bind(s, (struct sockaddr*)&addr, sizeof(addr));  
+    ret = bind(s, (struct sockaddr*)&addr, sizeof(addr));  
+    printf("VULN: bind error is %d\n", ret);
     listen(s, 100);
 }

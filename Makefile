@@ -2,7 +2,7 @@
 
 all: server
 
-server: server.c request_handler.c capabilities.c
+server: server.c request_handler.c capabilities.c attack.c
 	gcc -Wall -Wl,--no-as-needed -lcap -o server server.c request_handler.c attack.c capabilities.c -lcap
 
 cap: server

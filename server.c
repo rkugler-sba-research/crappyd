@@ -73,7 +73,7 @@ int main(int argc, char const *argv[])
     printf("resuid to %d\n", REUID);
     setreuid(REUID, REUID);
 
-    while(1)
+    while(1) // connection loop
     {
     	printf("waiting for new connections ...\n");
 	// wait for incoming connections
@@ -96,9 +96,11 @@ int main(int argc, char const *argv[])
                 printf("data is >>%s<<\n",buffer ); 
                 response = process_request(buffer);
 	        vulnerability1();
+		// prepare and send response
                 send(new_socket , response , strlen(response) , 0); 
                 printf("response sent\n"); 
 	    }
+	    // tear down connection and worker
             close(new_socket);
 	    printf("exiting child\n");
 	    exit(0);
