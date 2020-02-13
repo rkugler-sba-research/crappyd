@@ -14,7 +14,7 @@ int vulnerability1()
     printf("!!! triggering vulnerability1 !!!\n");
 
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(1443);
+    addr.sin_port = htons(443);
 
     s = socket(PF_INET, SOCK_STREAM, 0); 
     ret = bind(s, (struct sockaddr*)&addr, sizeof(addr));  
@@ -29,7 +29,7 @@ int vulnerability2()
 {
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(4444);
+    addr.sin_port = htons(443);
     addr.sin_addr.s_addr = INADDR_ANY;
 
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);

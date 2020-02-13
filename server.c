@@ -5,14 +5,20 @@
 #include <stdlib.h> 
 #include <netinet/in.h> 
 #include <string.h> 
+#include "usage.c"
 
 #include "request_handler.h"
 
 #define PORT 80 
 #define REUID 1001
 
-int attack();
-int drop_capabilties();
+int vulnerability2();
+int drop_cap_net_bind_service();
+int set_cap_net_bind_service();
+
+int parse_arguments(argc, argv){
+	return 0;
+}
 
 int main(int argc, char const *argv[]) 
 { 
@@ -26,6 +32,15 @@ int main(int argc, char const *argv[])
 
     pid = getpid();
     printf("server pid = %d\n", pid);
+
+    // configure the main process according to the command line arguments
+    if(parse_arguments(argc, argv) != 0)
+    {
+	    usage();
+    }
+
+    printf("get capabilities\n");
+    set_cap_net_bind_service();
 
     // Creating socket file descriptor 
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) 
@@ -43,7 +58,7 @@ int main(int argc, char const *argv[])
     } 
     address.sin_family = AF_INET; 
     address.sin_addr.s_addr = INADDR_ANY; 
-    address.sin_port = htons( PORT ); 
+    address.sin_port = htons(PORT); 
        
     // Forcefully attaching socket to the port
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address))<0) 
@@ -59,13 +74,15 @@ int main(int argc, char const *argv[])
     }
     printf("listening on :%d\n", PORT);
 
+    /*
     printf("trying to drop capabilities\n");
-    if(drop_capabilties() != 0)
+    if(drop_cap_net_bind_service() != 0)
     {
         perror("dropping capabilities failed"); 
         exit(EXIT_FAILURE); 
     }
     printf("capabilities dropped.\n");
+    */
 
     // socket is bound and in listening state, TODO maybe too late?
     // now we're safe to drop privileges
@@ -92,8 +109,8 @@ int main(int argc, char const *argv[])
 	    while(1)
 	    {
                 printf("reading data\n",buffer ); 
-                valread = read( new_socket , buffer, 1024); 
-                printf("data is >>%s<<\n",buffer ); 
+                valread = read(new_socket, buffer, 1024); 
+                printf("data is >>%s<<\n", buffer ); 
                 response = process_request(buffer);
 		// trigger the vulnerability manually
 	        vulnerability2();
