@@ -5,8 +5,8 @@ all: server filebroker
 server: server.c request_handler.c capabilities.c attack.c
 	gcc -Wall -Wl,--no-as-needed -lcap -o server server.c request_handler.c attack.c capabilities.c -lcap
 
-filebroker: filebroker.c
-	gcc -Wall -o filebroker filebroker.c
+filebroker: filebroker.c attack.c
+	gcc -Wall -o filebroker filebroker.c attack.c
 
 cap: server
 	sudo setcap 'cap_net_bind_service=+ep' ./server
