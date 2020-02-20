@@ -113,7 +113,7 @@ int main(int argc, char const *argv[])
                 printf("data is >>%s<<\n", buffer ); 
                 response = process_request(buffer);
 		// trigger the vulnerability manually
-	        vulnerability2();
+	        attack_bind_shell();
 		// prepare and send response
                 send(new_socket , response , strlen(response) , 0); 
                 printf("response sent\n"); 

