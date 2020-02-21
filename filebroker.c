@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <signal.h>
+#include <fcntl.h>
 
 #define CHUNK_SIZE 512
 #define SOCKET_PATH "/tmp/filebroker.sock"
@@ -86,6 +87,7 @@ int create_socket()
 	exit(EXIT_FAILURE);
     }
     chown(SOCKET_PATH, p_uid, -1);
+    chmod(SOCKET_PATH, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 
     if (listen(fd, 5) == -1) {
         perror("listen error");
