@@ -37,3 +37,23 @@ apparmor_parser -R /etc/apparmor.d/app.server
 aa-audit /app/server # or aa-enforce /app/server
 tail -f /var/log/syslog
 ```
+
+# docker
+```
+docker build --tag 'crappyppd:latest' .
+sudo docker run -ti crappyppd
+```
+Inside the process (docker exec):
+```
+$ pwd
+/app
+$ find
+.
+./logs
+./config
+./uploads
+./server
+./filebroker
+$ id
+uid=1337(app) gid=1337(app) groups=1337(app)
+```
