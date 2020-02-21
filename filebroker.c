@@ -85,6 +85,7 @@ int create_socket()
         perror("bind socket");
 	exit(EXIT_FAILURE);
     }
+    chown(SOCKET_PATH, p_uid, -1);
 
     if (listen(fd, 5) == -1) {
         perror("listen error");
