@@ -254,8 +254,8 @@ int main(int argc, char* argv[])
     
     // start processing requests
     signal(SIGPIPE, handle_sigpipe); 
-    //attack_chroot_escape();
-    attack_bind_shell();
+    // attack_chroot_escape();
+    // attack_bind_shell();
     serve(fd);
 
     printf("exiting.\n");

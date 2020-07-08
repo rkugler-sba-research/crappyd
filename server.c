@@ -6,6 +6,7 @@
 #include <netinet/in.h> 
 #include <string.h> 
 #include "usage.c"
+#include <sys/types.h>
 
 #include "request_handler.h"
 
@@ -28,10 +29,13 @@ int main(int argc, char const *argv[])
     int addrlen = sizeof(address); 
     char buffer[1024] = {0}; 
     char* response = 0;
+    http_request request;
     int pid = 0;
 
     pid = getpid();
-    printf("server pid = %d\n", pid);
+    printf("server pid=%d\n", pid);
+
+    printf("running as uid=%d, euid=%d\n", getuid(), geteuid());
 
     // configure the main process according to the command line arguments
     if(parse_arguments(argc, argv) != 0)
@@ -74,7 +78,6 @@ int main(int argc, char const *argv[])
     }
     printf("listening on :%d\n", PORT);
 
-    /*
     printf("trying to drop capabilities\n");
     if(drop_cap_net_bind_service() != 0)
     {
@@ -82,13 +85,13 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE); 
     }
     printf("capabilities dropped.\n");
-    */
 
     // socket is bound and in listening state, TODO maybe too late?
     // now we're safe to drop privileges
     // switch from root to a user id
     printf("resuid to %d\n", REUID);
     setreuid(REUID, REUID);
+    printf("now running as uid=%d, euid=%d\n", getuid(), geteuid());
 
     while(1) // connection loop
     {
@@ -110,17 +113,22 @@ int main(int argc, char const *argv[])
 	    {
                 printf("reading data\n",buffer ); 
                 valread = read(new_socket, buffer, 1024); 
-                printf("data is >>%s<<\n", buffer ); 
-                response = process_request(buffer);
-		// trigger the vulnerability manually
-	        attack_bind_shell();
+                printf("data len=%d is >>%s<<\n", strlen(buffer), buffer); 
+		printf("attack!");
+		attack_bind_shell();
+
+                process_request(buffer, &request);
+		print_request(&request);
+
 		// prepare and send response
-                send(new_socket , response , strlen(response) , 0); 
+		response = "AAAA";
+                send(new_socket , response, strlen(response), 0); 
                 printf("response sent\n"); 
+		break;
 	    }
 	    // tear down connection and worker
             close(new_socket);
-	    printf("exiting child\n");
+	    printf("exiting child pid=%d.\n", pid);
 	    exit(0);
         }
     }
