@@ -9,6 +9,7 @@
 #include <sys/types.h>
 
 #include "request_handler.h"
+#include "seccomp.c"
 
 #define PORT 80 
 #define REUID 1001
@@ -16,6 +17,7 @@
 int vulnerability2();
 int drop_cap_net_bind_service();
 int set_cap_net_bind_service();
+void seccomp_filter();
 
 int parse_arguments(argc, argv){
 	return 0;
@@ -78,6 +80,8 @@ int main(int argc, char const *argv[])
     }
     printf("listening on :%d\n", PORT);
 
+    //seccomp_filter();
+
     printf("trying to drop capabilities\n");
     if(drop_cap_net_bind_service() != 0)
     {
@@ -92,7 +96,7 @@ int main(int argc, char const *argv[])
     printf("resuid to %d\n", REUID);
     setreuid(REUID, REUID);
     printf("now running as uid=%d, euid=%d\n", getuid(), geteuid());
-
+    
     while(1) // connection loop
     {
     	printf("waiting for new connections ...\n");
@@ -119,6 +123,8 @@ int main(int argc, char const *argv[])
 
                 process_request(buffer, &request);
 		print_request(&request);
+
+
 
 		// prepare and send response
 		response = "AAAA";

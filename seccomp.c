@@ -39,8 +39,8 @@ seccomp_filter(void)
         BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_KILL_PROCESS),
 
 	// block calls 
-        // BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_openat, 0, 1),
-        // BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_KILL_PROCESS),
+        BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_execve, 0, 1),
+        BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_KILL_PROCESS),
 
 	// default
 	BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ALLOW)
@@ -55,17 +55,4 @@ seccomp_filter(void)
         exit(1); // error installing the filter
 
 }    
-   
-int
-main(int argc, char* argv[])
-{
-    printf("before seccomp\n");
-    if(prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0))
-	exit(1);
-    seccomp_filter();
-    printf("filter installed. opening file\n");
-    //execve("/bin/sh", NULL, NULL);
-    open("/etc/passwd", "r");
-    printf("after seccomp\n");
-    return 0;
-}
+
