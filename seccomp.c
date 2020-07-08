@@ -38,9 +38,9 @@ seccomp_filter(void)
 	BPF_JUMP(BPF_JMP | BPF_JGE | BPF_K, X32_SYSCALL_BIT, 0, 1),
         BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_KILL_PROCESS),
 
-	// execve 
-        BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_execve, 0, 1),
-        BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_KILL_PROCESS),
+	// block calls 
+        // BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, __NR_openat, 0, 1),
+        // BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_KILL_PROCESS),
 
 	// default
 	BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ALLOW)
